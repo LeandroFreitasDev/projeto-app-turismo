@@ -13,6 +13,7 @@ import { styles } from './styles';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
+import  DateTimePicker from '@react-native-community/datetimepicker';
 
 
 type DrawerProps = DrawerNavigationProp<any>;
@@ -23,6 +24,12 @@ type Lugar = {
   imagem: any;
   descricao: string;
 };
+
+type Clima ={
+  min: number;
+  max: number;
+  avg: number;
+}
 
 const lugares: Lugar[] = [
   {
@@ -68,23 +75,56 @@ export default function Home() {
   const [lugarSelecionado, setLugarSelecionado] = useState<Lugar | null>(null);
 
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
-  const [clima, setClima] = useState(null);
+  const [clima, setClima] = useState<Clima | null>(null);
   const [calendario, setCalendario] = useState<boolean>(false);
+  const [enviar, setEnviar] = useState<boolean>(false)
 
-  
+  const fetchClima = async () => {
 
+    function formatar(dataSelecionada: Date): string{
+      const ano = dataSelecionada.getFullYear();
+      const mes = String(dataSelecionada.getMonth() + 1).padStart(2, '0');
+  const dia = String(dataSelecionada.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+    }
 
+   const dataFutura= formatar(dataSelecionada);
+
+    const url = `http://api.weatherapi.com/v1/future.json?key=02d74a8480fb4249942234224252506&q=Petrópolis&dt=${dataFutura}&lang=pt`
+
+    try{
+      const res = await fetch(url);
+      const data = await res.json();
+
+      console.log("Resposta da API", data, dataFutura)
+
+      const dataTxt = dataSelecionada.toISOString().split('T')[0];
+      const dia = data.forecast.forecastday[0]
+
+      if(dia){
+        const min = dia.day.mintemp_c;
+        const max = dia.day.maxtemp_c;
+        const avg = dia.day.avgtemp_c;
+        setClima({min, max, avg});
+ 
+      } else {
+        alert("Previsão não encontrada");
+      }
+
+    } catch (error){
+      console.error(error);
+      alert("Erro")
+    }
+
+  }
   const navigation = useNavigation<DrawerProps>();
 
   function handleOpenModal(lugar: Lugar) {
     setLugarSelecionado(lugar);
     setModalVisible(true);
   }
-
   function handleSend() {
-
     Keyboard.dismiss();
-
 
     setTimeout(() => {
       if (!sugestao.trim()) {
@@ -95,12 +135,12 @@ export default function Home() {
       console.log(`Sugestão para ${lugarSelecionado?.nome}: ${sugestao}`);
       setsugestao('');
       setModalVisible(false);
-    }, 100); 
+    }, 100);
   }
 
   return (
     <ScrollView>
-       <View style={styles.container}>
+      <View style={styles.container}>
         {lugares.map((lugar) => (
           <TouchableOpacity
             key={lugar.id}
@@ -132,10 +172,38 @@ export default function Home() {
                 onChangeText={setsugestao}
                 multiline
               /> */}
-
-              <TouchableOpacity style={styles.button} onPress={handleSend}>
+              <Text>
+                Veja como vai estar o clima em Petrópolis
+              </Text>
+<TouchableOpacity style={styles.button} onPress={ () => setCalendario(true)}>
+                <Text style={styles.buttonText}>Escolher data</Text>
+              </TouchableOpacity>
+              {calendario && (
+                  <>
+                    <DateTimePicker value={dataSelecionada} mode="date" onChange={(event, date) => {
+                if (date) setDataSelecionada(date);
+                setCalendario(false);  setEnviar(true);
+              }}/>
+                  </>
+              )}
+                {enviar && (
+                  <>
+                    <TouchableOpacity style={styles.button} onPress={fetchClima}>
                 <Text style={styles.buttonText}>Enviar</Text>
               </TouchableOpacity>
+                  </>
+                )}
+              
+
+              
+              {clima && (
+                <View style={{marginTop: 20}}>
+                  <Text>🌡️ Temperatura Mínima: {clima.min}ºC</Text>
+                  <Text>🌡️ Temperatura Máxima: {clima.max}ºC</Text>
+                  <Text>🌡️ Temperatura Média: {clima.avg}ºC</Text>
+                </View>
+
+              )}
             </View>
           </View>
         </Modal>
