@@ -14,6 +14,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 
+
 type DrawerProps = DrawerNavigationProp<any>;
 
 type Lugar = {
@@ -66,6 +67,13 @@ export default function Home() {
   const [sugestao, setsugestao] = useState('');
   const [lugarSelecionado, setLugarSelecionado] = useState<Lugar | null>(null);
 
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
+  const [clima, setClima] = useState(null);
+  const [calendario, setCalendario] = useState<boolean>(false);
+
+  
+
+
   const navigation = useNavigation<DrawerProps>();
 
   function handleOpenModal(lugar: Lugar) {
@@ -92,7 +100,7 @@ export default function Home() {
 
   return (
     <ScrollView>
-      <View style={styles.container}>
+       <View style={styles.container}>
         {lugares.map((lugar) => (
           <TouchableOpacity
             key={lugar.id}
@@ -116,14 +124,14 @@ export default function Home() {
                 {lugarSelecionado?.descricao}
               </Text>
 
-              <Text style={styles.modalText}>Formulário de Contato</Text>
+              {/* <Text style={styles.modalText}>Formulário de Contato</Text>
               <TextInput
                 placeholder="Digite sua sugestão"
                 style={styles.input}
                 value={sugestao}
                 onChangeText={setsugestao}
                 multiline
-              />
+              /> */}
 
               <TouchableOpacity style={styles.button} onPress={handleSend}>
                 <Text style={styles.buttonText}>Enviar</Text>
